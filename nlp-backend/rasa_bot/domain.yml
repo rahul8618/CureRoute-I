@@ -1,0 +1,53 @@
+version: "3.1"
+intents:
+  - greet
+  - provide_symptom
+  - provide_duration
+  - provide_severity
+  - affirm
+  - deny
+  - goodbye
+
+slots:
+  base_symptom:
+    type: text
+    influence_conversation: true
+    mappings:
+      - type: from_entity
+        entity: symptom
+  duration:
+    type: text
+    influence_conversation: true
+    mappings:
+      - type: from_entity
+        entity: duration
+  severity:
+    type: text
+    influence_conversation: true
+    mappings:
+      - type: from_entity
+        entity: severity
+
+entities:
+  - symptom
+  - duration
+  - severity
+
+responses:
+  utter_greet:
+    - text: "Hello! I'm CureRoute's triage assistant. Please describe your symptoms."
+  utter_ask_duration:
+    - text: "How long have you been experiencing these symptoms? (e.g., 2 days, 1 week)"
+  utter_ask_severity:
+    - text: "On a scale of 1-10, how would you rate the severity of your discomfort?"
+  utter_provide_remedy:
+    - text: "Based on your symptoms, let me analyze and provide recommendations..."
+  utter_goodbye:
+    - text: "Take care! Remember to consult a healthcare provider if symptoms persist."
+
+actions:
+  - action_run_triage_pipeline
+
+session_config:
+  session_expiration_time: 60
+  carry_over_slots_to_new_session: false

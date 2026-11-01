@@ -1,0 +1,34 @@
+version: "3.1"
+rules:
+  - rule: Greet user
+    steps:
+      - intent: greet
+      - action: utter_greet
+
+  - rule: Ask for duration when symptom is provided but duration missing
+    steps:
+      - intent: provide_symptom
+      - action: utter_ask_duration
+
+  - rule: Ask for severity when duration is provided but severity missing
+    condition:
+      - slot_was_set:
+          - base_symptom: true
+    steps:
+      - intent: provide_duration
+      - action: utter_ask_severity
+
+  - rule: Run triage pipeline when all slots are filled
+    condition:
+      - slot_was_set:
+          - base_symptom: true
+      - slot_was_set:
+          - duration: true
+    steps:
+      - intent: provide_severity
+      - action: action_run_triage_pipeline
+
+  - rule: Say goodbye
+    steps:
+      - intent: goodbye
+      - action: utter_goodbye

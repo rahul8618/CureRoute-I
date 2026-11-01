@@ -1,0 +1,73 @@
+version: "3.1"
+nlu:
+  - intent: greet
+    examples: |
+      - hello
+      - hi
+      - hey there
+      - good morning
+      - good afternoon
+
+  - intent: provide_symptom
+    examples: |
+      - I have a [headache](symptom)
+      - I'm experiencing [chest pain](symptom)
+      - I've been having [nausea](symptom) and [vomiting](symptom)
+      - my [throat](symptom) is sore
+      - I have a [fever](symptom) and [body aches](symptom)
+      - I'm feeling [dizzy](symptom)
+      - I have [stomach pain](symptom) and [diarrhea](symptom)
+      - my [back](symptom) hurts a lot
+      - I've been [coughing](symptom) for a while
+      - I have a [runny nose](symptom) and [sneezing](symptom)
+      - experiencing [joint pain](symptom) in my knees
+      - I feel [fatigued](symptom) and [weak](symptom)
+      - I have [muscle cramps](symptom)
+      - my [eyes](symptom) are itchy and red
+      - I have a [skin rash](symptom) on my arm
+
+  - intent: provide_duration
+    examples: |
+      - for [2 days](duration)
+      - since [last week](duration)
+      - about [3 hours](duration)
+      - it started [yesterday](duration)
+      - for the past [1 month](duration)
+      - since [this morning](duration)
+      - [5 days](duration) now
+      - approximately [2 weeks](duration)
+
+  - intent: provide_severity
+    examples: |
+      - it's about a [7](severity)
+      - [3](severity) out of 10
+      - around [5](severity)
+      - it's very bad, maybe [9](severity)
+      - mild, about [2](severity)
+      - [8](severity) on the scale
+      - moderate, I'd say [4](severity)
+      - really painful, [10](severity)
+
+  - intent: affirm
+    examples: |
+      - yes
+      - yeah
+      - correct
+      - that's right
+      - absolutely
+
+  - intent: deny
+    examples: |
+      - no
+      - nope
+      - not really
+      - I don't think so
+      - negative
+
+  - intent: goodbye
+    examples: |
+      - bye
+      - goodbye
+      - see you
+      - take care
+      - thanks bye
