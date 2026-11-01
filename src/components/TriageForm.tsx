@@ -55,6 +55,38 @@ export default function TriageForm({ onResult }: TriageFormProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const submitToTextEndpoint = useCallback(async (text: string): Promise<void> => {
+    const res = await fetch(`${NLP_BASE}/triage/text`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text, session }),
+    });
+
+    if (!res.ok) throw new Error(`Text endpoint returned ${res.status}`);
+
+    const data = await res.json();
+
+    if (data.action === "ask") {
+      setSession((prev) => ({ ...prev, ...data.session }));
+      onResult({
+        severity: "low",
+        remedy_suggestions: data.question || data.message,
+        requires_doctor: false,
+        isComplete: false,
+      });
+    } else if (data.action === "result") {
+      setSession({});
+      onResult({
+        severity: data.severity || "medium",
+        remedy_suggestions: data.remedy_suggestions || data.remedy || "",
+        requires_doctor: data.requires_doctor ?? true,
+        isComplete: true,
+      });
+    } else {
+      throw new Error("Text endpoint returned an unsupported response.");
+    }
+  }, [onResult, session]);
+
   // ── Check NLP backend health on mount & periodically ────────────────────────
   useEffect(() => {
     let cancelled = false;
@@ -64,7 +96,10 @@ export default function TriageForm({ onResult }: TriageFormProps) {
           method: "GET",
           signal: AbortSignal.timeout(3000),
         });
-        if (!cancelled) setBackendConnected(res.ok);
+        const health = res.ok ? await res.json() : null;
+        const triageModelsReady =
+          health?.models?.t5 === true && health?.models?.biogpt === true;
+        if (!cancelled) setBackendConnected(triageModelsReady);
       } catch {
         if (!cancelled) setBackendConnected(false);
       }
@@ -165,15 +200,15 @@ export default function TriageForm({ onResult }: TriageFormProps) {
       mediaRecorderRef.current = recorder;
       recorder.start();
       setIsListening(true);
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error("getUserMedia error:", e);
-      if (e.name === "NotAllowedError") {
+      if (e instanceof DOMException && e.name === "NotAllowedError") {
         setError("Microphone access denied.");
       } else {
         setError("Could not start voice input.");
       }
     }
-  }, [isListening, setIsVoiceInput]);
+  }, [isListening, setIsVoiceInput, submitToTextEndpoint]);
 
   // ── File handling (unchanged) ───────────────────────────────────────────────
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -201,41 +236,6 @@ export default function TriageForm({ onResult }: TriageFormProps) {
 
   const [lastSubmittedSymptoms, setLastSubmittedSymptoms] = useState("");
   const prevLangRef = useRef(currentLanguage);
-
-  // ── Core text submission to FastAPI backend ─────────────────────────────────
-  const submitToTextEndpoint = async (text: string): Promise<void> => {
-    const res = await fetch(`${NLP_BASE}/triage/text`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text, session }),
-    });
-
-    if (!res.ok) throw new Error(`Text endpoint returned ${res.status}`);
-
-    const data = await res.json();
-
-    if (data.action === "ask") {
-      // Slot-filling: the backend wants more information
-      // Update session with any partial slots the backend returned
-      setSession((prev) => ({ ...prev, ...data.session }));
-      // Show the follow-up question as a low-severity message
-      onResult({
-        severity: "low",
-        remedy_suggestions: data.question || data.message,
-        requires_doctor: false,
-        isComplete: false,
-      });
-    } else if (data.action === "result") {
-      // Final triage result
-      setSession({}); // reset session for next interaction
-      onResult({
-        severity: data.severity || "medium",
-        remedy_suggestions: data.remedy_suggestions || data.remedy || "",
-        requires_doctor: data.requires_doctor ?? true,
-        isComplete: true,
-      });
-    }
-  };
 
   // ── Fallback submission to the Next.js /api/triage route (OpenRouter) ───────
   const submitToFallback = async (
