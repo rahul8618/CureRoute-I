@@ -1,4 +1,4 @@
-// FALLBACK ROUTE: Used when the local NLP backend (FastAPI @ localhost:8000) is unreachable.
+// FALLBACK ROUTE: Used when the FastAPI NLP backend is unavailable.
 // The primary pipeline now runs through the Python FastAPI server with Hugging Face models.
 import { NextRequest, NextResponse } from "next/server";
 

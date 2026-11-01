@@ -13,8 +13,8 @@ import {
 } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 
-// ── FastAPI backend base URL ──────────────────────────────────────────────────
-const NLP_BASE = "http://localhost:8000";
+// ── FastAPI backend via the same-origin Next.js proxy ─────────────────────────
+const NLP_BASE = "/api/nlp";
 
 // ── Session state for slot-filling dialog ─────────────────────────────────────
 interface SlotSession {
@@ -130,7 +130,7 @@ export default function TriageForm({ onResult }: TriageFormProps) {
           const formData = new FormData();
           formData.append("file", audioBlob, "audio.webm");
 
-          const res = await fetch(`${NLP_BASE}/api/triage/audio`, {
+          const res = await fetch(`${NLP_BASE}/triage/audio`, {
             method: "POST",
             body: formData,
           });
@@ -204,7 +204,7 @@ export default function TriageForm({ onResult }: TriageFormProps) {
 
   // ── Core text submission to FastAPI backend ─────────────────────────────────
   const submitToTextEndpoint = async (text: string): Promise<void> => {
-    const res = await fetch(`${NLP_BASE}/api/triage/text`, {
+    const res = await fetch(`${NLP_BASE}/triage/text`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text, session }),
