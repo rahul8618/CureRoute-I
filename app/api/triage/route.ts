@@ -1,10 +1,10 @@
-// FALLBACK ROUTE: Used when the FastAPI NLP backend is unavailable.
-// The primary pipeline now runs through the Python FastAPI server with Hugging Face models.
 import { NextRequest, NextResponse } from "next/server";
 
 // TODO: ADD YOUR OPENROUTER_API_KEY IN .env.local
 // Get your key at: https://openrouter.ai/keys
 const apiKey = process.env.OPENROUTER_API_KEY?.trim();
+
+const MEDICAL_DISCLAIMER = `\n\n⚠️ MEDICAL DISCLAIMER: I am an AI, not a doctor. Consult a healthcare provider.`;
 
 const SEVERE_KEYWORDS = [
   "chest pain",
@@ -60,6 +60,14 @@ Additional rules:
 - Be empathetic and caring. Never diagnose — only suggest what symptoms "might indicate."`;
 }
 
+function getFallbackResponse(symptoms: string, isSevere: boolean): string {
+  if (isSevere) {
+    return `## 🚨 Emergency Alert\n\nBased on your description, your symptoms may indicate a **medical emergency**.\n\n**Please take immediate action:**\n- 📞 **Call 112 (India Emergency)** or **108 (Ambulance)** immediately\n- 🏥 Go to the **nearest emergency room** right away\n- Do NOT wait or try home remedies\n- If someone is with you, ask them to help\n\n**Do NOT delay seeking professional medical help.**${MEDICAL_DISCLAIMER}`;
+  }
+
+  return `## 🩺 Symptom Assessment\n\nBased on your description of: *"${symptoms}"*\n\n### Suggested OTC Remedies & Home Care:\n\n- 💊 **Rest & Hydration** — Drink plenty of warm fluids (water, herbal tea, clear soup)\n- 🌡️ **Paracetamol/Acetaminophen** — For fever or mild pain relief (follow package dosage)\n\n### ⏰ When to See a Doctor:\n- If symptoms persist for more than 3 days\n- If symptoms worsen or new symptoms develop\n- If you develop a high fever (above 102°F/39°C)\n\n> **Note:** This is a demo response. Add your OpenRouter API key in \`.env.local\` for AI-powered analysis.${MEDICAL_DISCLAIMER}`;
+}
+
 export async function POST(request: NextRequest) {
   let symptoms = "";
   let language = "en";
@@ -94,8 +102,10 @@ export async function POST(request: NextRequest) {
 
     if (!apiKey || apiKey === "YOUR_OPENROUTER_API_KEY_HERE") {
       return NextResponse.json({
-        error: "AI triage is not configured. Set OPENROUTER_API_KEY in the Vercel project environment variables and redeploy.",
-      }, { status: 503 });
+        severity: isSevere ? "high" : "low",
+        remedy_suggestions: getFallbackResponse(symptoms.trim(), isSevere),
+        requires_doctor: true,
+      });
     }
 
     const langNameForCmd = {
@@ -161,9 +171,13 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("Triage API error:", error);
-    return NextResponse.json(
-      { error: "The AI service could not process this request. Please try again shortly." },
-      { status: 502 }
-    );
+    const lowerSymptoms = (symptoms || "").toLowerCase();
+    const isSevere = SEVERE_KEYWORDS.some((keyword) => lowerSymptoms.includes(keyword));
+
+    return NextResponse.json({
+      severity: isSevere ? "high" : ("medium" as const),
+      remedy_suggestions: getFallbackResponse(symptoms || "", isSevere),
+      requires_doctor: true,
+    });
   }
 }

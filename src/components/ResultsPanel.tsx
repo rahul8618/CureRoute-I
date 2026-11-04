@@ -82,7 +82,7 @@ export default function ResultsPanel({ result }: ResultsPanelProps) {
     },
   };
 
-  const config = severityConfig[result.severity];
+  const config = severityConfig[result.severity] || severityConfig.medium;
   const Icon = config.icon;
 
   useEffect(() => {

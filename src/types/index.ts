@@ -1,10 +1,10 @@
 export interface Pharmacy {
-  id: number;
+  id: number | string;
   name: string;
   lat: number;
   lng: number;
   address: string;
-  inStock: string[];
+  inStock?: string[];
 }
 
 export interface TriageResult {
